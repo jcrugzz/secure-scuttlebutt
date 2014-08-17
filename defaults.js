@@ -40,7 +40,7 @@ module.exports = {
     //and returns true if the signature was valid.
     verify: function (pub, sig, hash) {
       return curve.verify(hash, sig, pub);
-
+    },
     //codec for keys. this handles serializing
     //and deserializing keys for storage.
     //in elliptic curves, the public key can be
