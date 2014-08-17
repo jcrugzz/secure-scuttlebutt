@@ -1,13 +1,20 @@
 var crypto = require('crypto')
-var ecc = require('eccjs')
-var k256 = ecc.curves.k256
+var curve = require('./curve');
 var bsum = require('./util').bsum
 var proquint = require('proquint-')
 
 exports.encode = function (keys) {
-  var PRIVATE = (keys && keys.private || keys) || exports.generate()
-  keys = ecc.restore(k256, PRIVATE)
-  var public = bsum(keys.public)
+  var PRIVATE = (keys
+    && typeof keys.getPrivate === 'function'
+    && keys.getPrivate('hex')
+    || keys) || exports.generate();
+
+  keys = curve.keyPair(PRIVATE);
+  // This seems inefficient (not totally sure) but there might be a better way
+  // TODO: have elliptic return buffers maybe?
+  // A BN instance is what we get returned without passing in hex
+  // https://github.com/indutny/bn.js/blob/master/lib/bn.js
+  var public = bsum(new Buffer(keys.getPublic('hex'), 'hex'));
 
   var contents = [
   '### FOR YOUR EYES ONLY ###',
@@ -15,7 +22,7 @@ exports.encode = function (keys) {
   '# this is your SECRET name:',
   '',
   proquint
-    .encodeCamelDash(keys.private)
+    .encode(new Buffer(keys.getPrivate('hex'), 'hex'))
     .split('-')
     .reduce(function (s, e, i) {
       return s + (i==4?'\n':i ? '-': '') + e
@@ -45,14 +52,10 @@ exports.decode = function (buffer) {
     buffer.toString('utf8')
       .replace(/\s*\#[^\n]*/g, '')
 
-  return ecc.restore(k256, proquint.decode(buffer))
+  return curve.keyPair(proquint.decode(buffer).toString('hex'))
 }
 
 exports.generate = function () {
-  //use node's crypto because eccjs expects to be in a browser
-  //and wont beable to do random number generation properly.
-  return ecc.restore(k256, crypto.randomBytes(32))
+  return curve.genKeyPair()
 }
 
-if(!module.parent)
-  console.log(exports.create())

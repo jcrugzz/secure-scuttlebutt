@@ -22,7 +22,7 @@ USAGE:
 
   scuttlebutt public     # display the public key.
 
-  scuttlebutt follow USERHASH 
+  scuttlebutt follow USERHASH
 
   scuttlebutt create     # create a new user
 */
@@ -37,9 +37,9 @@ var path     = require('path')
 var level    = require('level')
 var sublevel = require('level-sublevel/bytewise')
 var proquint = require('proquint-')
-var ecc      = require('eccjs')
-var k256     = ecc.curves.k256
 var Blake2s  = require('blake2s')
+
+var curve    = require('./curve')
 
 var pull     = require('pull-stream')
 
@@ -63,7 +63,7 @@ try {
       fs.readFileSync(namefile, 'ascii')
         .replace(/\s*\#[^\n]*/g, '')
     )
-  keys = ecc.restore(k256, PRIVATE)
+  keys = curve.keyPair(PRIVATE.toString('hex'))
 } catch (err) {
   console.error(err)
 }
